@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>GAT</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<link rel="stylesheet" href="lib/stylesheets/ratchet.css">
+	<link rel="stylesheet" href="lib/stylesheets/junior.css">
+	<link rel="stylesheet" href="//cdn.leafletjs.com/leaflet-0.4/leaflet.css" />
+	<!--[if lte IE 8]><link rel="stylesheet" href="//cdn.leafletjs.com/leaflet-0.4/leaflet.ie.css" /><![endif]-->
+	<link rel="stylesheet" href="src/stylesheets/styles.css">
+</head>
+<body>
+	<div class="loader"><span class="icon"></span></div>
+	
+	<div id="app-container">
+		<div id="app-main"></div>
+	</div>
+	
+	<script type="text/template" id="tmpl-home">
+		<header class="bar-title">
+			<h1 class="title">GAT</h1>
+		</header>
+		<div class="content">
+			<ul class="list">
+				<li><a href="#new" data-anim="left">New Order <span class="chevron"></span></a></li>
+				<li><a href="#my" data-anim="left">My Orders <span class="chevron"></span><span class="count"><%= data.count || "0" %></span></a></li>
+			</ul>
+			<div class="content-padded">
+				<a href="#login" class="button logout">Logout</a>
+			</div>
+		</div>
+	</script>
+	
+	<script type="text/template" id="tmpl-login">
+		<header class="bar-title">
+			<h1 class="title">Login</h1>
+		</header>
+		<div class="content content-padded">
+			<form>
+				<div class="input-group">
+					<input type="text" name="username" placeholder="Username" autocapitalize="off">
+					<input type="password" name="password" placeholder="Password">
+				</div>
+				<button type="submit" class="button-block button-main">Login</button>
+			</form>
+		</div>
+	</script>
+	
+	<script type="text/template" id="tmpl-new-order">
+		<header class="bar-title">
+			<a href="#" class="button-prev" data-anim="right">Back</a>
+			<h1 class="title">New Order</h1>
+			<a href="#address" class="button-next" data-anim="left">Next</a>
+		</header>
+		<div class="content content-padded">
+			<form>
+				<input type="file" name="photo">
+				<select name="structure">
+					<option value="">Select Structure...</option>
+					<option<% if(data.structure == "Building") {%> selected="selected"<%}%>>Building</option>
+					<option<% if(data.structure == "Pole") {%> selected="selected"<%}%>>Pole</option>
+					<option<% if(data.structure == "Mailbox") {%> selected="selected"<%}%>>Mailbox</option>
+					<option<% if(data.structure == "Other") {%> selected="selected"<%}%>>Other</option>
+				</select>
+				<select name="paint">
+					<option value="">Select Paint Needed...</option>
+					<option<% if(data.paint == "Red") {%> selected="selected"<%}%>>Red</option>
+					<option<% if(data.paint == "Blue") {%> selected="selected"<%}%>>Blue</option>
+					<option<% if(data.paint == "Green") {%> selected="selected"<%}%>>Green</option>
+					<option<% if(data.paint == "Other") {%> selected="selected"<%}%>>Other</option>
+				</select>
+				<select name="releaseform">
+					<option value="">Select Release Form...</option>
+					<option<% if(data.releaseform == "Form 24") {%> selected="selected"<%}%>>Form 24</option>
+					<option<% if(data.releaseform == "Form 48") {%> selected="selected"<%}%>>Form 48</option>
+				</select>
+				<!--<ul class="segmented-controller">
+					<li><a href="#">Form 24</a></li>
+					<li><a href="#">Form 48</a></li>
+				</ul>-->
+			</form>
+		</div>
+	</script>
+	
+	<script type="text/template" id="tmpl-address">
+		<header class="bar-title">
+			<a href="#new" class="button-prev" data-anim="right">Back</a>
+			<h1 class="title">Address</h1>
+			<a class="button submit">Submit</a>
+		</header>
+		<div class="content">
+			<form>
+				<input type="text" name="address" class="address">
+				<input type="hidden" name="latitude">
+				<input type="hidden" name="longitude">
+			</form>
+			<div class="map-container">
+				<div class="crosshair"><img src="./img/crosshair.png"></div>
+			</div>
+		</div>
+	</script>
+	
+	<script type="text/template" id="tmpl-my-orders">
+		<header class="bar-title">
+			<a href="#" class="button-prev" data-anim="right">Back</a>
+			<h1 class="title">My Orders</h1>
+		</header>
+		<div class="content">
+			<ul class="list">
+			<% _.each(data.orders, function(order) { %>
+				<li><a href="#view/<%= order.objectId %>" data-anim="left">
+					<%= order.address %> <abbr class="timeago" title="<%= order.createdAt %>"><%= order.createdAt %></abbr>
+					<% if(order.photo) { %><img src="http://i.imgur.com/<%= order.photo %>s.jpg"><% } %>
+					<span class="chevron"></span>
+				</a></li>
+			<% }); %>
+			</ul>
+			<% if(data.numRecords > data.orders.length) { %>
+			<div class="content-padded">
+				<a class="button-block more">More Orders...</a>
+			</div>
+			<% } %>
+		</div>
+	</script>
+	
+	<script type="text/template" id="tmpl-view-order">
+		<header class="bar-title">
+			<a href="#my" class="button-prev" data-anim="right">Back</a>
+			<h1 class="title">Order</h1>
+		</header>
+		<div class="content content-padded">
+			<dl>
+				<dt>Created</dt>
+				<dd><%= util.friendlyDate(util.parseISO8601(data.createdAt), true) %></dd>
+				
+				<dt>Address</dt>
+				<dd><%= data.address %></dd>
+				
+				<dt>Structure</dt>
+				<dd><%= data.structure %></dd>
+				
+				<dt>Paint</dt>
+				<dd><%= data.paint %></dd>
+				
+				<dt>Release Form</dt>
+				<dd><%= data.releaseform %></dd>
+			</dl>
+			<% if(data.photo) { %>
+			<a href="http://i.imgur.com/<%= data.photo %>l.jpg" target="_blank"><img src="http://i.imgur.com/<%= data.photo %>m.jpg"></a>
+			<% } %>
+		</div>
+	</script>
+	
+	<script type="text/template" id="tmpl-upload">
+		<%console.log(data.images)%>
+		<header class="bar-title">
+			<h1 class="title">Uploading</h1>
+		</header>
+		<div class="content content-padded">
+			
+		</div>
+	</script>
+	
+	<script src="lib/javascripts/modernizr.custom.15848.js"></script>
+	<script src="lib/javascripts/zepto.min.js"></script>
+	<script src="lib/javascripts/zepto.flickable.min.js"></script>
+	<script src="lib/javascripts/lodash.min.js"></script>
+	<script src="lib/javascripts/backbone-min.js"></script>
+	<script src="lib/javascripts/backbone_filters.js"></script>
+	<script src="lib/javascripts/junior.js"></script>
+	<script src="lib/javascripts/zepto.timeago.js"></script>
+	<script src="//www.parsecdn.com/js/parse-1.1.15.min.js"></script>
+	<script src="//cdn.leafletjs.com/leaflet-0.4/leaflet.js"></script>
+	<script src="//maps.googleapis.com/maps/api/js?sensor=false"></script>
+	
+	<script src="src/javascripts/util.js"></script>
+	<script src="src/javascripts/map.js"></script>
+	<script src="src/javascripts/app.js"></script>
+	<!--<script src="src/javascripts/example.js"></script>-->
+</body>
+</html>

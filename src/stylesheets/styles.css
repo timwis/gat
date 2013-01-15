@@ -1,0 +1,69 @@
+/* Fix scrolling */
+body, .content, #app-container { position: static; }
+.content { -webkit-overflow-scrolling: auto; }
+header + .content { padding-top: 44px; }
+header + .content-padded { padding-top: 55px; }
+.bar-title .title + [class*="button"]:last-child { top: 5px; } /* From ratchet.css, overridden by junior.css */
+
+/* Block-level submit buttons */
+button.button-block, input.button-block { width: 100%; }
+
+/* Loading indicator from jQuery Mobile */
+.loading .loader { display: block; }
+.loading * { pointer-events: none; }
+.loader {
+	display: none;
+	z-index: 9999999;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	border:0;
+	background: none;
+	filter: Alpha(Opacity=18);
+	opacity: .18;
+	width: 46px;
+	height: 46px;
+	margin-left: -23px;
+	margin-top: -23px;
+}
+.loader .icon {
+	background-color: #000;
+	background: url(../../img/ajax-loader.gif);
+	background-size: 46px 46px;
+	display: block;
+	margin: 0;
+	width: 44px;
+	height: 44px;
+	padding: 1px;
+	-webkit-border-radius: 36px;
+	-moz-border-radius: 36px;
+	border-radius: 36px;
+}
+
+/* Forms */
+input[type="file"] { width: 100%; height: 30px; }
+
+/* Map */
+/*.map-container { position: relative; }*/
+.map-container { position: absolute; top: 84px; bottom: 0; left: 0; right: 0; }
+.map { width: 100%; height: 100%; }
+.crosshair {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	margin-left: -10px;
+	margin-top: -10px;
+	pointer-events: none;
+}
+input.address { margin-bottom: 0; }
+input.address.loading { background: url("../../img/spinner.gif") no-repeat 9px 9px; }
+
+/* My Orders */
+ul.list li img { height: 40px; position: absolute; top: 50%; right: 40px; margin-top: -20px; }
+
+/* View Order */
+dt { font-weight: bold; }
+dd { min-height: 25px; }
+
+/* Timeago */
+abbr.timeago { font-size: 80%; color: #555555; }
