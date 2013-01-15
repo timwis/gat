@@ -1,7 +1,7 @@
 var GAT = GAT || {Models: {}, Views: {}, Collections: {}, Routers: {}};
 var util = util || {};
 (function(app, util, $) {
-	/*
+    /*
 	 * Stock functions
 	 */
 	util.loading = function(set) {
@@ -90,4 +90,12 @@ var util = util || {};
 		}
 		setTimeout( function(){ window.scrollTo(0, 1); }, 50 );
 	}
-})(GAT, util, Zepto);
+	
+	util.imgurSuffix = function(path, suffix) {
+		var photoParts = path.split(".");
+		if(photoParts.length >= 2) {
+			photoParts[photoParts.length - 2] += suffix;
+		}
+		return photoParts.join(".");
+	}
+})(GAT, util, jQuery);

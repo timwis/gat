@@ -12,7 +12,7 @@ button.button-block, input.button-block { width: 100%; }
 .loading .loader { display: block; }
 .loading * { pointer-events: none; }
 .loader {
-	display: none;
+    display: none;
 	z-index: 9999999;
 	position: fixed;
 	top: 50%;
@@ -64,6 +64,7 @@ ul.list li img { height: 40px; position: absolute; top: 50%; right: 40px; margin
 /* View Order */
 dt { font-weight: bold; }
 dd { min-height: 25px; }
+img { max-width: 275px; }
 
 /* Timeago */
 abbr.timeago { font-size: 80%; color: #555555; }

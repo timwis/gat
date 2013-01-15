@@ -1,7 +1,7 @@
 var GAT = GAT || {Models: {}, Views: {}, Collections: {}, Routers: {}};
 var util = util || {};
 (function(app, util) {
-	
+    
 	app.Views.MapView = Backbone.View.extend({
 		defaults: {
 			latitude: 39.9522

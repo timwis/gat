@@ -1,7 +1,7 @@
 var GAT = GAT || {Models: {}, Views: {}, Collections: {}, Routers: {}};
 var util = util || {};
 (function(app, util, $) {
-	
+    
 	/**
 	 * Config
 	 */
@@ -64,47 +64,71 @@ var util = util || {};
 		}
 	});
 	
-	app.Models.Image = Backbone.Model.extend({
+	app.Models.Imgur = Backbone.Model.extend({
 		defaults: {
-			url: "http://api.imgur.com/2/upload.json"
-			,key: "17ddcab1bc7de79688829dd46696cb44"
+			url: "https://api.imgur.com/3/upload.json"
+			//,key: "17ddcab1bc7de79688829dd46696cb44" // api v2
+			,key: "0dc8fbf0e30c756"
 		}
 		,sync: function(method, model, options) {
-			var fd = new FormData()
-				,xhr = new XMLHttpRequest();
-			fd.append("image", model.get("image"));
-			fd.append("key", model.get("key"));
-			xhr.open("POST", model.get("url"));
-			xhr.onload = function() {
-				options.success(JSON.parse(xhr.responseText));
-				if(model.collection) model.collection.trigger("uploaded");
+			if(method === "create") {
+				var fd = new FormData();
+				fd.append("image", model.get("image"));
+				console.log(model.get("image"));
+				$.ajax({
+					url: model.get("url")
+					,data: fd
+					,processData: false
+					,contentType: false
+					,headers: {"Authorization": "Client-ID " + model.get("key")}
+					,type: "POST"
+					,success: function(response) {
+						if(DEBUG) console.log("Imgur Response", response);
+						if(response.success) options.success(response);
+						else options.error(response);
+					}
+					,error: options.error
+				});
 			}
-			xhr.onerror = function() {
-				options.error(JSON.parse(xhr.responseText));
-			}
-			// Track progress
-			var eventSource = xhr.upload || xhr
-				,self = this;
-			eventSource.addEventListener("progress", function(e) {
-				var loaded = e.position || e.loaded
-					,total = e.totalSize || e.total
-					,percentage = Math.round(loaded * 100 / total);
-				self.set("percentage", percentage);
-				if(DEBUG) console.log(percentage + "%");
-			});
-			xhr.send(fd);
 		}
 		,parse: function(response) {
-			this.set("hash", response.upload.image.hash);
+			this.set("link", response.data.link);
 			return this;
 		}
 	});
 	
-	app.Collections.Images = Backbone.Collection.extend({model: app.Models.Image});
+	app.Models.ParseFile = Backbone.Model.extend({
+		defaults: {
+			url: "https://api.parse.com/1/files/"
+			,key: "qN54fHJiUrc42nnIOPKq60BAWhWISgABQMylC5Nw"
+		}
+		,sync: function(method, model, options) {
+			if(method === "create") {
+				var file = model.get("image");
+				$.ajax({
+					url: model.get("url") + file.name
+					,data: file
+					,processData: false
+					,contentType: false
+					,headers: {
+						"X-Parse-Application-Id": Parse.applicationId
+						,"X-Parse-REST-API-Key": model.get("key")
+						,"Content-Type": file.type
+					}
+					,type: "POST"
+					,success: options.success
+					,error: options.error
+				});
+			}
+		}
+		,parse: function(response) {
+			this.set("link", response.url);
+			return this;
+		}
+	});
 	
-	// TODO: Add ImageView that monitors change:progress on each image to update progress bar
-	// but how do I submit the order when they're all complete?
-	
+	app.Collections.Images = Backbone.Collection.extend({model: app.Models.Imgur});
+		
 	app.Models.Order = Parse.Object.extend("Order");
 	
 	app.Collections.Orders = Parse.Collection.extend({
@@ -131,7 +155,7 @@ var util = util || {};
 			});
 		}
 		,nextPage: function() {
-			this.skip += this.limit;
+			this.skip = this.models.length; // This probably wouldn't work if it weren't descending order because models can be added
 			this.query.skip(this.skip);
 			return this;
 		}
@@ -146,9 +170,10 @@ var util = util || {};
 			_.bindAll(this, "render", "onClickMore", "onClickPrev");
 			this.template = _.template($("#tmpl-my-orders").html());
 			this.collection.on("reset", this.render);
-			this.collection.on("add", this.render);
+			this.collection.on("add", this.onAdd, this);
 			this.collection.on("change:numRecords", this.render);
 		}
+		,onAdd: function() { console.log("onAdd()"); this.render(); }
 		,render: function() {
 			this.$el.html(this.template({orders: this.collection.toJSON(), numRecords: this.collection.numRecords || 0}));
 			this.$("abbr.timeago").timeago();
@@ -187,9 +212,9 @@ var util = util || {};
 		}
 	});
 
-	app.Views.NewOrderView = Jr.View.extend({
+	app.Views.NewOrderDetailsView = Jr.View.extend({
 		initialize: function() {
-			_.bindAll(this, "onAddFile", "onClickPrev", "onClickNext");
+			_.bindAll(this, "onAddFile", "onClickNext");
 			this.template = _.template($("#tmpl-new-order").html());
 		}
 		,render: function() {
@@ -197,74 +222,64 @@ var util = util || {};
 			return this;
 		}
 		,events: {
-			"click .button-prev": "onClickPrev"
-			,"click .button-next": "onClickNext"
+			"click .button-next": "onClickNext"
 			,"change input[type='file']": "onAddFile"
 			// remove image button
 		}
 		,onAddFile: function(e) { // TODO: What if they change the file?
 			var newOrder = this.model;
-			this.options.images.create(new app.Models.Image({image: e.target.files[0]}), {
+			this.options.images.create(new app.Models.Imgur({image: e.target.files[0]}), {
 				success: function(image) {
 					console.log("Uploaded image", image);
 					var currentPhotos = newOrder.get("photos") || [];
-					newOrder.set("photos", currentPhotos.push(image.get("hash"))); // TODO
+					currentPhotos.push(image.get("link"));
+					newOrder.set("photos", currentPhotos);
 					if( ! newOrder.isNew()) newOrder.save(null, {patch: true}); // If order has already been saved, update it to have this photo
 				}// TODO: error handling?
 			});
 		}
-		,onClickPrev: function(e) {
-			this.model.clear(); // Clear the model since we're essentially cancelling the order
-		}
 		,onClickNext: function(e) {
+            e.preventDefault();
 			var formData = util.serializeObject(this.$("form"));
 			delete formData.photo;
 			this.model.set(formData);
-			var order = this.model;
-			this.options.images.each(function(image) {
-				image.save(null, {
-					success: function(model) {
-						console.log("Success", model);
-						var currentPhotos = order.get("photos")
-							,hash = model.get("hash");
-						order.set("photos", currentPhotos ? currentPhotos.push(hash) : [hash]);
-					}
-				});
-			});
+            app.router.newOrderAddress();
 		}
 	});
 
-	app.Views.AddressView = Jr.View.extend({
+	app.Views.NewOrderAddressView = Jr.View.extend({
 		initialize: function() {
-			_.bindAll(this, "render", "onUserInput", "onKeyPress", "onAddressChanged", "onCoordsChanged", "onLoading", "onClickSubmit", "onClickPrev");
-			this.template = $("#tmpl-address").html();
+			_.bindAll(this, "render", "onClickPrev", "onUserInput", "onAddressChanged", "onCoordsChanged", "onLoading", "onClickSubmit", "onPressEnter");
+			this.template = _.template($("#tmpl-address").html());
 			this.options.mapView.on("mapmoved", this.options.geocoder.reverseGeocode);
 			this.options.geocoder.on("change:address", this.onAddressChanged);
 			this.options.geocoder.on("loading:start", this.onLoading, true);
 			this.options.geocoder.on("loading:end", this.onLoading, false);
 			this.options.geocoder.on("coordschanged", this.options.mapView.panTo); // Can I watch change:coords instead?
 			this.options.geocoder.on("change:coords", this.onCoordsChanged);
-			this.waiting = {};
-			if(DEBUG) console.log(this.model.toJSON());
+			//this.waiting = {};
+			//if(DEBUG) console.log(this.model.toJSON());
 		}
 		,render: function() {
-			this.$el.html(this.template);
-			this.$(".map-container").prepend(this.options.mapView.el);
+			this.$el.html(this.template(this.model.toJSON()));
+			this.$(".map-container").prepend(this.options.mapView.el); // TODO: Not reusable
 			return this;
 		}
 		,events: {
-			"change .address": "onUserInput"
-			//,"keypress .address": "onKeyPress"
+            "click .button-prev": "onClickPrev"
+			,"change .address": "onUserInput"
 			,"click .submit": "onClickSubmit"
-			,"submit form": "onUserInput" // Called if user hits enter on the address <input>
+			,"submit form": "onPressEnter" // Called if user hits enter on the address <input>
 		}
+        ,onClickPrev: function(e) {
+            e.preventDefault();
+            this.saveForm(); // Save address/lat/lng to model
+            app.router.newOrderDetails();
+        }
 		,onUserInput: function(e) {
 			var input = this.$(".address").val();
 			if(input) this.options.geocoder.geocode(input);
 		}
-		/*,onKeyPress: function(e) {
-			if(e.keyCode === 13) this.onUserInput();
-		}*/
 		,onAddressChanged: function(geocoder) {
 			this.$(".address").val(geocoder.get("address")); // Does this come through a param?
 		}
@@ -275,18 +290,18 @@ var util = util || {};
 		,onLoading: function(set) {
 			this.$(".address").toggleClass("loading", set);
 		}
+        ,saveForm: function() {
+            var formData = util.serializeObject(this.$("form"));
+            this.model.set(formData);
+        }
 		,onClickSubmit: function(e) {
 			e.preventDefault();
-			var formData = util.serializeObject(this.$("form"))
-				,newOrder = this.model;
-				
-			newOrder.set(formData); // Save address & lat/lng
-			newOrder.set("user", Parse.User.current()); // Add user info to order
-			if(DEBUG) console.log(newOrder.toJSON());
+			this.saveForm(); // Save address/lat/lng to model
+			if(DEBUG) console.log(this.model.toJSON());
 			util.loading(true); // Show loading indicator
 			
-			// Add newOrder to collection & push it to server via .create()
-			app.myOrders.create(newOrder, {
+			// Add this.model to collection & push it to server via .create()
+			app.myOrders.create(this.model, {
 				success: function(model) {
 					if(DEBUG) console.log("Created order successfully", model);
 					util.loading(false); // Hide loading indicator					
@@ -301,21 +316,9 @@ var util = util || {};
 				,wait: true
 			});
 		}
-		//,onSubmit: function(e) { e.preventDefault(); } // Don't submit form if the user hits enter on the address <input>
-	});
-
-	app.Views.UploadView = Jr.View.extend({
-		initialize: function() {
-			_.bindAll(this, "render", "onUploaded");
-			this.template = _.template($("#tmpl-upload").html());
-			app.images.on("uploaded", this.onUploaded);
-		}
-		,render: function() {
-			this.$el.html(this.template({images: app.images}));
-			return this;
-		}
-		,onUploaded: function() {
-			//if(app.images.pluck("hash").indexOf(undefined) === -1)
+		,onPressEnter: function(e) {
+			e.preventDefault(); // Don't submit form if the user hits enter on the address <input>
+			this.onUserInput();
 		}
 	});
 	
@@ -324,32 +327,19 @@ var util = util || {};
 			"": "home"
 			,"login": "login"
 			,"new": "newOrder"
-			,"address": "address"
-			,"upload": "upload"
 			,"my": "myOrders"
 			,"view/:id": "viewOrder"
 			,"*path": "defaultRoute"
 		}
 		,initialize: function() {
 			app.myOrders = app.myOrders || new app.Collections.MyOrders();
+			app.mapView = new app.Views.MapView(); // So it will start locating
 		}
 		,before: {
 			// Ensure user is logged in for every page except 'login'
-			"[^login]": function() {
+			"^(?!login$).*": function() {
 				if( ! Parse.User.current()) {
 					this.navigate("login", {trigger: true, replace: true});
-					return false;
-				}
-			}
-			,"address": function() {
-				if( ! app.newOrder) {
-					this.navigate("new", {trigger: true, replace: true});
-					return false;
-				}
-			}
-			,"upload": function() {
-				if( ! app.newOrder || ! app.images.length) {
-					this.navigate("new", {trigger: true, replace: true});
 					return false;
 				}
 			}
@@ -357,46 +347,43 @@ var util = util || {};
 		,home: function() {
 			if(app.myOrders.numRecords === undefined) app.myOrders.getNumRecords();
 			app.homeView = app.homeView || new app.Views.HomeView({});
-			this.renderView(app.homeView);
+			this.showView(app.homeView);
 		}
 		,login: function() {
 			app.loginView = app.loginView || new app.Views.LoginView();
-			this.renderView(app.loginView);
+			this.showView(app.loginView);
 		}
-		,newOrder: function() {
-			var images = new app.Collections.Images();
-			app.newOrder = app.newOrder || new app.Models.Order();
-			app.newOrderView = app.newOrderView || new app.Views.NewOrderView({
-				model: app.newOrder
-				,images: images
-			});
-			this.renderView(app.newOrderView);
-		}
-		,address: function() {
-			app.geocoder = app.geocoder || new app.Models.Geocoder();
-			app.addressView = app.addressView || new app.Views.AddressView({
-				mapView: app.mapView
-				,geocoder: app.geocoder
-				,model: app.newOrder
-			});
-			this.renderView(app.addressView); // TODO: If you view this page, then leave, then come back, address is erased
-			app.mapView.render(); // Must be done after element is created in DOM
-		}
-		,upload: function() {
-			app.uploadView = app.uploadView || new app.Views.UploadView();
-			this.renderView(app.uploadView);
-		}
+        ,newOrder: function() {
+            var order = new app.Models.Order({user: Parse.User.current()});
+            app.newOrderDetailsView = new app.Views.NewOrderDetailsView({
+                model: order
+                ,images: new app.Collections.Images()
+            })
+            app.newOrderAddressView = new app.Views.NewOrderAddressView({
+                model: order
+                ,geocoder: new app.Models.Geocoder()
+                ,mapView: app.mapView // Maybe I don't need to pass this
+            });
+            this.newOrderDetails();
+        }
+        ,newOrderDetails: function() {
+            this.showView(app.newOrderDetailsView);
+        }
+        ,newOrderAddress: function() {
+            this.showView(app.newOrderAddressView);
+            app.mapView.render(); // Must be done after element is created in DOM
+        }
 		,myOrders: function() {
 			if(app.myOrders.numRecords === undefined) app.myOrders.getNumRecords();
-			if( ! app.myOrders.length) app.myOrders.fetch();
+			if( ! app.myOrders.length) app.myOrders.fetch(); // TODO: Doesn't get triggered if you started at #new and added one to the collection
 			app.myOrdersView = app.myOrdersView || new app.Views.MyOrdersView({collection: app.myOrders});
-			this.renderView(app.myOrdersView);
+			this.showView(app.myOrdersView);
 		}
 		,viewOrder: function(id) {
 			var order;
 			if((order = app.myOrders.get(id))) {
 				app.orderView = new app.Views.OrderView({model: order});
-				this.renderView(app.orderView);
+				this.showView(app.orderView);
 			} else {
 				this.navigate("", {trigger: true, replace: true});
 			}
@@ -404,13 +391,21 @@ var util = util || {};
 		,defaultRoute: function(path) {
 			console.log("Error 404"); // TODO
 		}
+        ,showView: function(view) {
+            if(this.currentView) {
+                this.currentView.$el.detach(); // Detach it so we don't kill the events on the view
+            }
+            $("#app-main").empty().append(view.render().el);
+            this.currentView = view;
+        }
 	});
 	
-	$(document).ready(function() {
-		app.router = new app.Routers.AppRouter();
-		Backbone.history.start();
-		$("body").css("min-height", $(window).height()+60); // Remove address bar
-	});
+	/**
+	 * Executed Immediately
+	 */
+	app.router = new app.Routers.AppRouter();
+	Backbone.history.start();
+	$("body").css("min-height", $(window).height()+60); // Remove address bar
 	
 	/**
 	 * Add animations to <a> that have data-anim set
@@ -434,8 +429,4 @@ var util = util || {};
 		}
 	});*/
 	
-	/**
-	 * Executed Immediately
-	 */
-	app.mapView = new app.Views.MapView(); // So it will start locating
-})(GAT, util, Zepto);
+})(GAT, util, jQuery);

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>GAT</title>
+    <title>GAT</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">
 	<meta name="apple-mobile-web-app-capable" content="yes">
@@ -53,7 +53,7 @@
 		<header class="bar-title">
 			<a href="#" class="button-prev" data-anim="right">Back</a>
 			<h1 class="title">New Order</h1>
-			<a href="#address" class="button-next" data-anim="left">Next</a>
+			<a class="button-next" data-anim="left">Next</a>
 		</header>
 		<div class="content content-padded">
 			<form>
@@ -87,15 +87,15 @@
 	
 	<script type="text/template" id="tmpl-address">
 		<header class="bar-title">
-			<a href="#new" class="button-prev" data-anim="right">Back</a>
+			<a class="button-prev" data-anim="right">Back</a>
 			<h1 class="title">Address</h1>
 			<a class="button submit">Submit</a>
 		</header>
-		<div class="content">
+		<div class="content"><%console.log(data);%>
 			<form>
-				<input type="text" name="address" class="address">
-				<input type="hidden" name="latitude">
-				<input type="hidden" name="longitude">
+				<input type="text" name="address" class="address" value="<%= data.address %>">
+				<input type="hidden" name="latitude" value="<%= data.latitude %>">
+				<input type="hidden" name="longitude" value="<%= data.longitude %>">
 			</form>
 			<div class="map-container">
 				<div class="crosshair"><img src="./img/crosshair.png"></div>
@@ -113,14 +113,14 @@
 			<% _.each(data.orders, function(order) { %>
 				<li><a href="#view/<%= order.objectId %>" data-anim="left">
 					<%= order.address %> <abbr class="timeago" title="<%= order.createdAt %>"><%= order.createdAt %></abbr>
-					<% if(order.photo) { %><img src="http://i.imgur.com/<%= order.photo %>s.jpg"><% } %>
+					<% if(order.photos && order.photos.length) { %><img src="<%= order.photos[0] %>"><% } %>
 					<span class="chevron"></span>
 				</a></li>
 			<% }); %>
 			</ul>
 			<% if(data.numRecords > data.orders.length) { %>
 			<div class="content-padded">
-				<a class="button-block more">More Orders...</a>
+				<a class="button-block more">More...</a>
 			</div>
 			<% } %>
 		</div>
@@ -148,8 +148,10 @@
 				<dt>Release Form</dt>
 				<dd><%= data.releaseform %></dd>
 			</dl>
-			<% if(data.photo) { %>
-			<a href="http://i.imgur.com/<%= data.photo %>l.jpg" target="_blank"><img src="http://i.imgur.com/<%= data.photo %>m.jpg"></a>
+			<% if(data.photos && data.photos.length) { %>
+				<% _.each(data.photos, function(photo) { %>
+				<a href="<%= photo %>" target="_blank"><img src="<%= photo %>"></a><br>
+				<% }); %>
 			<% } %>
 		</div>
 	</script>
@@ -165,13 +167,15 @@
 	</script>
 	
 	<script src="lib/javascripts/modernizr.custom.15848.js"></script>
-	<script src="lib/javascripts/zepto.min.js"></script>
-	<script src="lib/javascripts/zepto.flickable.min.js"></script>
+	<script src="lib/javascripts/jquery.min.js"></script>
+	<!--<script src="lib/javascripts/zepto.min.js"></script>-->
+	<!--<script src="lib/javascripts/zepto.flickable.min.js"></script>-->
 	<script src="lib/javascripts/lodash.min.js"></script>
 	<script src="lib/javascripts/backbone-min.js"></script>
 	<script src="lib/javascripts/backbone_filters.js"></script>
 	<script src="lib/javascripts/junior.js"></script>
-	<script src="lib/javascripts/zepto.timeago.js"></script>
+	<script src="lib/javascripts/jquery.timeago.js"></script>
+	<!--<script src="lib/javascripts/zepto.timeago.js"></script>-->
 	<script src="//www.parsecdn.com/js/parse-1.1.15.min.js"></script>
 	<script src="//cdn.leafletjs.com/leaflet-0.4/leaflet.js"></script>
 	<script src="//maps.googleapis.com/maps/api/js?sensor=false"></script>
