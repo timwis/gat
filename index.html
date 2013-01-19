@@ -50,6 +50,10 @@
 	</script>
 	
 	<script type="text/template" id="tmpl-new-order">
+        <% var option = function(text, current) { return "<option" + (text === current ? " selected=\"selected\"" : "") + ">" + text + "</option>"; } %>
+        <% var buildOptions = function(options, current) {
+            return _.map(options.sort(), function(text) { return "<option" + (text === current ? " selected=\"selected\"" : "") + ">" + text + "</option>"; }).join("");
+        } %>
 		<header class="bar-title">
 			<a href="#" class="button-prev" data-anim="right">Back</a>
 			<h1 class="title">New Order</h1>
@@ -58,29 +62,89 @@
 		<div class="content content-padded">
 			<form>
 				<input type="file" name="photo">
-				<select name="structure">
+    			<select name="structure">
 					<option value="">Select Structure...</option>
-					<option<% if(data.structure == "Building") {%> selected="selected"<%}%>>Building</option>
-					<option<% if(data.structure == "Pole") {%> selected="selected"<%}%>>Pole</option>
-					<option<% if(data.structure == "Mailbox") {%> selected="selected"<%}%>>Mailbox</option>
-					<option<% if(data.structure == "Other") {%> selected="selected"<%}%>>Other</option>
+					<%= buildOptions([
+                            "Alleyway"
+                            ,"Bridge"
+                            ,"Building"
+                            ,"Cinderblock"
+                            ,"Cobble Wall"
+                            ,"Concrete Wall"
+                            ,"Door"
+                            ,"dumpster"
+                            ,"Elect Control Box"
+                            ,"Fence"
+                            ,"Garage"
+                            ,"House"
+                            ,"Pole"
+                            ,"Security Gate"
+                            ,"Sidewalk"
+                            ,"Steps"
+                            ,"Stop Sign"
+                            ,"Street"
+                            ,"Street Sign"
+                            ,"Stucco Wall"
+                            ,"Traffic Control Box"
+                            ,"Under/Overpass"
+                            ,"Window"
+                            ,"Wood Telephone Pole"
+                            ,"Other"
+                        ], data.asset) %>
 				</select>
+                <select name="location">
+                    <option value="">Select Location...</option>
+                    <%= buildOptions([
+                            "Front"
+                            ,"Back"
+                            ,"Side"
+                            ,"Alleyway"
+                            ,"Driveway"
+                            ,"2nd Level"
+                            ,"Other"
+                        ], data.location) %>
+                </select>
+                <select name="powerwash">
+                    <option value="">Select Powerwash...</option>
+                    <%= buildOptions([
+                            "Brick"
+                            ,"Concrete"
+                            ,"Marble"
+                            ,"Metal"
+                            ,"Stone"
+                            ,"Other"
+                        ], data.location) %>
+                </select>
 				<select name="paint">
 					<option value="">Select Paint Needed...</option>
-					<option<% if(data.paint == "Red") {%> selected="selected"<%}%>>Red</option>
-					<option<% if(data.paint == "Blue") {%> selected="selected"<%}%>>Blue</option>
-					<option<% if(data.paint == "Green") {%> selected="selected"<%}%>>Green</option>
-					<option<% if(data.paint == "Other") {%> selected="selected"<%}%>>Other</option>
+                    <%= buildOptions([
+                            "Black"
+                            ,"Blue (Dark)"
+                            ,"Blue (Crisp)"
+                            ,"Brown"
+                            ,"Buff"
+                            ,"Cement"
+                            ,"Cement (Eley)"
+                            ,"Gray (Dark)"
+                            ,"Gray (Light)"
+                            ,"Green (Forest)"
+                            ,"Red (Brick)"
+                            ,"White"
+                        ], data.paint) %>
 				</select>
 				<select name="releaseform">
 					<option value="">Select Release Form...</option>
-					<option<% if(data.releaseform == "Form 24") {%> selected="selected"<%}%>>Form 24</option>
-					<option<% if(data.releaseform == "Form 48") {%> selected="selected"<%}%>>Form 48</option>
+                    <%= buildOptions([
+                            "20"
+                            ,"24"
+                            ,"37"
+                            ,"Other"
+                        ], data.location) %>
 				</select>
-				<!--<ul class="segmented-controller">
-					<li><a href="#">Form 24</a></li>
-					<li><a href="#">Form 48</a></li>
-				</ul>-->
+				<ul class="segmented-controller" name="hittype">
+					<li><a>Rehits</a></li>
+					<li><a>New</a></li>
+				</ul>
 			</form>
 		</div>
 	</script>

@@ -242,6 +242,7 @@ var util = util || {};
             e.preventDefault();
 			var formData = util.serializeObject(this.$("form"));
 			delete formData.photo;
+            formData["hittype"] = this.$("[name='hittype'] .active a").eq(0).text() || null;
 			this.model.set(formData);
             app.router.newOrderAddress();
 		}
@@ -406,6 +407,12 @@ var util = util || {};
 	app.router = new app.Routers.AppRouter();
 	Backbone.history.start();
 	$("body").css("min-height", $(window).height()+60); // Remove address bar
+    
+    // Segmented controller switcher
+    $(".segmented-controller a").live("click", function(e) {
+        e.preventDefault();
+        $(this).parent().toggleClass("active").siblings().removeClass("active");
+    })
 	
 	/**
 	 * Add animations to <a> that have data-anim set
