@@ -85,6 +85,7 @@ var util = util || {};
 					,type: "POST"
 					,success: function(response) {
 						if(DEBUG) console.log("Imgur Response", response);
+                        alert("Image uploaded successfully");
 						if(response.success) options.success(response);
 						else options.error(response);
 					}
@@ -259,6 +260,7 @@ var util = util || {};
 					newOrder.set("photos", currentPhotos);
 					if( ! newOrder.isNew()) newOrder.save(null, {patch: true}); // If order has already been saved, update it to have this photo
 				}// TODO: error handling?
+                ,error: function() { alert("Error uploading image"); }
 			});
 		}
 		,onClickNext: function(e) {

@@ -43,3 +43,5 @@
 {"ts":1359566804232,"patch":[[{"diffs":[[0,".$(\""],[-1,"#photos"],[1,"preview"],[0,"\").a"]],"start1":7303,"start2":7303,"length1":15,"length2":15}]],"length":15899,"saved":false}
 {"ts":1359566911738,"patch":[[{"diffs":[[0,"this.$(\""],[1,"."],[0,"preview\""]],"start1":7299,"start2":7299,"length1":16,"length2":17}]],"length":15900,"saved":false}
 {"ts":1359567971418,"patch":[[{"diffs":[[0,"  }\r\n\t\t\t"],[-1,"/*"],[0,"this.opt"]],"start1":7597,"start2":7597,"length1":18,"length2":16},{"diffs":[[0,"\r\n\t\t\t});"],[-1,"*/"],[0,"\r\n\t\t}\r\n\t"]],"start1":8054,"start2":8054,"length1":18,"length2":16}]],"length":15896,"saved":false}
+{"ts":1359570496308,"patch":[[{"diffs":[[0,"dling?\r\n"],[1,"                ,error: function() { alert(\"Error uploading image\"); }\r\n"],[0,"\t\t\t});\r\n"]],"start1":8048,"start2":8048,"length1":16,"length2":88}]],"length":15968,"saved":false}
+{"ts":1359570534684,"patch":[[{"diffs":[[0,"response);\r\n"],[1,"                        alert(\"Image uploaded successfully\");\r\n"],[0,"\t\t\t\t\t\tif(res"]],"start1":2376,"start2":2376,"length1":24,"length2":87}]],"length":16031,"saved":false}
