@@ -33,6 +33,7 @@ var util = util || {};
 				Parse.User.logIn(username, password, {
 					success: function(user) {
 						util.loading(false);
+                        app.myOrders.setUser(user);
 						util.navigate("", "left");
 					}
 					,error: function(user, error) {
@@ -128,7 +129,7 @@ var util = util || {};
 	});
 	
 	app.Collections.Images = Backbone.Collection.extend({model: app.Models.Imgur});
-		
+	
 	app.Models.Order = Parse.Object.extend("Order");
 	
 	app.Collections.Orders = Parse.Collection.extend({
@@ -159,10 +160,9 @@ var util = util || {};
 			this.query.skip(this.skip);
 			return this;
 		}
-	});
-	
-	app.Collections.MyOrders = app.Collections.Orders.extend({
-		query: (new Parse.Query(app.Models.Order)).equalTo("user", Parse.User.current()).descending("createdAt")
+        ,setUser: function(user) {
+            this.query.equalTo("user", user).descending("createdAt");
+        }
 	});
 	
 	app.Views.MyOrdersView = Jr.View.extend({
@@ -237,8 +237,21 @@ var util = util || {};
 			// remove image button
 		}
 		,onAddFile: function(e) { // TODO: What if they change the file?
-			var newOrder = this.model;
-			this.options.images.create(new app.Models.Imgur({image: e.target.files[0]}), {
+			var newOrder = this.model
+                ,file = e.target.files[0];
+            // Add image preview
+            if(typeof FileReader !== "undefined" && (/image/i).test(file.type)) {
+                var img = $("<img/>")
+                    ,reader = new FileReader();
+                this.$(".preview").append(img);
+                reader.onload = (function(theImg) {
+                    return function(evt) {
+                        theImg.attr("src", evt.target.result);
+                    }
+                })(img);
+                reader.readAsDataURL(file);
+            }
+			this.options.images.create(new app.Models.Imgur({image: file}), {
 				success: function(image) {
 					console.log("Uploaded image", image);
 					var currentPhotos = newOrder.get("photos") || [];
@@ -343,7 +356,8 @@ var util = util || {};
 			,"*path": "defaultRoute"
 		}
 		,initialize: function() {
-			app.myOrders = app.myOrders || new app.Collections.MyOrders();
+			app.myOrders = new app.Collections.Orders();
+            if(Parse.User.current()) app.myOrders.setUser(Parse.User.current());
 			app.mapView = new app.Views.MapView(); // So it will start locating
 		}
 		/*,before: {

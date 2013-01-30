@@ -8,8 +8,9 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black">
 	<link rel="stylesheet" href="lib/stylesheets/ratchet.css">
 	<link rel="stylesheet" href="lib/stylesheets/junior.css">
-	<link rel="stylesheet" href="//cdn.leafletjs.com/leaflet-0.4/leaflet.css" />
+	<link rel="stylesheet" href="//cdn.leafletjs.com/leaflet-0.4/leaflet.css">
 	<!--[if lte IE 8]><link rel="stylesheet" href="//cdn.leafletjs.com/leaflet-0.4/leaflet.ie.css" /><![endif]-->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/3.0.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="src/stylesheets/styles.css">
 </head>
 <body>
@@ -61,7 +62,11 @@
 		</header>
 		<div class="content content-padded">
 			<form>
-				<input type="file" name="photo">
+                <button class="button-positive fileinput-button">
+                    <i class="icon-camera icon-3x"></i>
+                    <input type="file" name="photo">
+                </button>
+                <ul class="preview"></ul>
     			<select name="structure">
 					<option value="">Select Structure...</option>
 					<%= buildOptions([

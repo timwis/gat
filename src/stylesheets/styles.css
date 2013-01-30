@@ -41,7 +41,38 @@ button.button-block, input.button-block { width: 100%; }
 }
 
 /* Forms */
-input[type="file"] { width: 100%; height: 30px; }
+input[type="file"] { width: 100%; height: 100%; }
+
+/* Photo preview */
+.preview img {
+    max-width: 53px;
+    max-height: 53px;
+    margin: 2px;
+}
+
+/* File Input Button */
+.fileinput-button {
+    position: relative;
+    overflow: hidden;
+    float: left;
+    margin-right: 4px;
+}
+.fileinput-button input {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    opacity: 0;
+    filter: alpha(opacity=0);
+    transform: translate(-300px, 0) scale(4);
+    font-size: 23px;
+    direction: ltr;
+    cursor: pointer;
+}
+.fileupload-buttonbar .btn,
+.fileupload-buttonbar .toggle {
+    margin-bottom: 5px;
+}
 
 /* Map */
 /*.map-container { position: relative; }*/
