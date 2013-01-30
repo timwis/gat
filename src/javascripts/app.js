@@ -170,10 +170,15 @@ var util = util || {};
 			_.bindAll(this, "render", "onClickMore", "onClickPrev");
 			this.template = _.template($("#tmpl-my-orders").html());
 			this.collection.on("reset", this.render);
-			this.collection.on("add", this.onAdd, this);
+			this.collection.on("add", this.render);
 			this.collection.on("change:numRecords", this.render);
+            // TODO: Do the fetch here so you can add loading indicator
+            util.loading(true);
+            this.collection.fetch({
+                success: function() { util.loading(false); }
+                ,error: function() { util.loading(false); }
+            });
 		}
-		,onAdd: function() { console.log("onAdd()"); this.render(); }
 		,render: function() {
 			this.$el.html(this.template({orders: this.collection.toJSON(), numRecords: this.collection.numRecords || 0}));
 			this.$("abbr.timeago").timeago();
@@ -185,7 +190,12 @@ var util = util || {};
 		}
 		,onClickMore: function(e) {
 			e.preventDefault();
-			this.collection.nextPage().fetch({add: true});
+            util.loading(true);
+			this.collection.nextPage().fetch({
+                add: true
+                ,success: function() { util.loading(false); }
+                ,error: function() { util.loading(false); }
+            });
 		}
 		,onClickPrev: function(e) {
 			e.preventDefault();
@@ -336,7 +346,7 @@ var util = util || {};
 			app.myOrders = app.myOrders || new app.Collections.MyOrders();
 			app.mapView = new app.Views.MapView(); // So it will start locating
 		}
-		,before: {
+		/*,before: {
 			// Ensure user is logged in for every page except 'login'
 			"^(?!login$).*": function() {
 				if( ! Parse.User.current()) {
@@ -344,7 +354,13 @@ var util = util || {};
 					return false;
 				}
 			}
-		}
+		}*/
+        ,before: function(param, route) {
+            if(route !== "login" && ! Parse.User.current()) {
+                this.navigate("login", {trigger: true, replace: true});
+                return false;
+            }
+        }
 		,home: function() {
 			if(app.myOrders.numRecords === undefined) app.myOrders.getNumRecords();
 			app.homeView = app.homeView || new app.Views.HomeView({});
@@ -376,7 +392,7 @@ var util = util || {};
         }
 		,myOrders: function() {
 			if(app.myOrders.numRecords === undefined) app.myOrders.getNumRecords();
-			if( ! app.myOrders.length) app.myOrders.fetch(); // TODO: Doesn't get triggered if you started at #new and added one to the collection
+			//if( ! app.myOrders.length) app.myOrders.fetch(); // TODO: Doesn't get triggered if you started at #new and added one to the collection
 			app.myOrdersView = app.myOrdersView || new app.Views.MyOrdersView({collection: app.myOrders});
 			this.showView(app.myOrdersView);
 		}
@@ -408,11 +424,11 @@ var util = util || {};
 	Backbone.history.start();
 	$("body").css("min-height", $(window).height()+60); // Remove address bar
     
-    // Segmented controller switcher
+    // Segmented controller switcher // TODO: This doesn't seem to be working on iOS
     $(".segmented-controller a").live("click", function(e) {
         e.preventDefault();
         $(this).parent().toggleClass("active").siblings().removeClass("active");
-    })
+    });
 	
 	/**
 	 * Add animations to <a> that have data-anim set

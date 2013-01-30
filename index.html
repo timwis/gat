@@ -202,15 +202,24 @@
 				
 				<dt>Address</dt>
 				<dd><%= data.address %></dd>
-				
+    			
 				<dt>Structure</dt>
 				<dd><%= data.structure %></dd>
+    			
+				<dt>Location</dt>
+				<dd><%= data.location %></dd>
+    			
+				<dt>Powerwash</dt>
+				<dd><%= data.powerwash %></dd>
 				
 				<dt>Paint</dt>
 				<dd><%= data.paint %></dd>
 				
 				<dt>Release Form</dt>
 				<dd><%= data.releaseform %></dd>
+    			
+				<dt>Hit Type</dt>
+				<dd><%= data.hittype %></dd>
 			</dl>
 			<% if(data.photos && data.photos.length) { %>
 				<% _.each(data.photos, function(photo) { %>
@@ -236,7 +245,7 @@
 	<!--<script src="lib/javascripts/zepto.flickable.min.js"></script>-->
 	<script src="lib/javascripts/lodash.min.js"></script>
 	<script src="lib/javascripts/backbone-min.js"></script>
-	<script src="lib/javascripts/backbone_filters.js"></script>
+	<script src="lib/javascripts/backbone.routefilter.js"></script>
 	<script src="lib/javascripts/junior.js"></script>
 	<script src="lib/javascripts/jquery.timeago.js"></script>
 	<!--<script src="lib/javascripts/zepto.timeago.js"></script>-->
